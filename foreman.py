@@ -65,6 +65,7 @@ def foremancreate(host=None,name=None,dns=None,ip=None,osid=None,envid=None,arch
  url="http://%s/api/hosts" % (host)
  if dns:name="%s.%s" % (name,dns)
  if osid:osid=foremangetid(foremanhost,"operatingsystems",osid)
+ if not envid:envid="production"
  if envid:envid=foremangetid(foremanhost,"environments",envid)
  if archid:archid=foremangetid(foremanhost,"architectures",archid)
  if puppetid:puppetid=foremangetid(foremanhost,"puppet",puppetid)
