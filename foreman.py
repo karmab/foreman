@@ -104,49 +104,51 @@ def foremanupdateip(url,name,ip):
  foremando(url,actiontype="PUT",postdata=postdata)
 
 parser = optparse.OptionParser("Usage: %prog [options]")
-parser.add_option("-l", "--hosts", dest="hosts", action="store_true", help="List hosts")
-parser.add_option("-a", "--archs", dest="archs", action="store_true", help="List archs")
-#parser.add_option("-b", "--classes", dest="classes", type="string", help="Classes to add to a host")
-parser.add_option("-d", "--domains", dest="domains", action="store_true", help="List domains")
-parser.add_option("-o", "--os", dest="operatingsystems", action="store_true", help="List os")
-parser.add_option("-C", "--compute", dest="compute_resources", action="store_true", help="List compute resources")
-parser.add_option("-e", "--errors", dest="errors", action="store_true", help="Lists host with errors")
-parser.add_option("-s", "--status", dest="status", action="store_true", help="Get status")
-parser.add_option("-D", "--dashboard", dest="dashboard", action="store_true", help="Get Dashboard info")
-parser.add_option("-E", "--environments", dest="environments", action="store_true", help="List environments")
-parser.add_option("-H", "--hostgroups", dest="hostgroups", action="store_true", help="List hostgroups")
-parser.add_option("-P", "--puppet", dest="puppet", action="store_true", help="List puppets")
-parser.add_option("-n", "--new", dest="name", type="string",help="Create new server")
-parser.add_option("-1", "--ip", dest="ip", type="string",help="Ip to use when creating new server")
-parser.add_option("-k", "--kill", dest="kill", type="string",help="Kill given machine")
-parser.add_option("-m", "--mac", dest="mac", type="string",help="Mac to use when creating new server")
-parser.add_option("-M", "--memory", dest="memory", type="int", default=2048, help="Amount of memory to use when creating new server")
-parser.add_option("-2", "--cpus", dest="cores", type="int", default=2, help="Numbers of cpus to use when creating new server.Defaults to 1")
-parser.add_option("-p", "--powerup", dest="powerup", type="int", default=0, help="Whether to powerup server after creation.Defaults to no")
-parser.add_option("-f", "--host", dest="foremanhost", type="string",help="Foreman server or ip to use.Currently default to puppet host if not specified")
-parser.add_option("-g", "--group", dest="hostgroup", type="string",help="Hostgroup to use when creating new server ")
-parser.add_option("-c", "--computeresource", dest="compute_resource_id", type="int",help="Computeresource_id to use when creating new server")
-parser.add_option("-u", "--update", dest="update", action="store_true",help="Update existing server")
-parser.add_option("-v", "--verbose", dest="verbose", action="store_true",help="Verbose mode")
-parser.add_option("-7", "--puppetclass", dest="puppetclass", type="string",help="Add given class to a host")
+creationgroup = optparse.OptionGroup(parser, "Creation options")
+creationgroup.add_option("-n", "--new", dest="name", type="string",help="Create new server")
+creationgroup.add_option("-1", "--ip", dest="ip", type="string",help="Ip to use when creating new server")
+creationgroup.add_option("-k", "--kill", dest="kill", type="string",help="Kill given machine")
+creationgroup.add_option("-m", "--mac", dest="mac", type="string",help="Mac to use when creating new server")
+creationgroup.add_option("-M", "--memory", dest="memory", type="int", default=2048, help="Amount of memory to use when creating new server")
+creationgroup.add_option("-2", "--cpus", dest="cores", type="int", default=2, help="Numbers of cpus to use when creating new server.Defaults to 1")
+creationgroup.add_option("-p", "--powerup", dest="powerup", type="int", default=0, help="Whether to powerup server after creationgroup.Defaults to no")
+creationgroup.add_option("-f", "--host", dest="foremanhost", type="string",default="puppet",help="Foreman server or ip to use.Currently default to puppet host if not specified")
+creationgroup.add_option("-g", "--group", dest="hostgroup", type="string",help="Hostgroup to use when creating new server ")
+creationgroup.add_option("-c", "--computeresource", dest="compute_resource_id", type="int",help="Computeresource_id to use when creating new server")
+creationgroup.add_option("-7", "--puppetclass", dest="puppetclass", type="string",help="Add given class to a host")
+creationgroup.add_option("-J", "--dns", dest="dns", type="string", help="Dns domain")
+parser.add_option_group(creationgroup)
 listinggroup = optparse.OptionGroup(parser, "Listing options")
-#listinggroup.add_option("-l", "--listprofiles", dest="listprofiles", action="store_true", help="list available profiles")
-#listinggroup.add_option("-H", "--listhosts", dest="listhosts", action="store_true", help="List hosts")
+listinggroup.add_option("-a", "--listarchs", dest="listarchs", action="store_true", help="List archs")
+listinggroup.add_option("-d", "--listdomains", dest="listdomains", action="store_true", help="List domains")
+listinggroup.add_option("-E", "--listenvironments", dest="listenvironments", action="store_true", help="List environments")
+listinggroup.add_option("-H", "--listhostgroups", dest="listhostgroups", action="store_true", help="List hostgroups")
+listinggroup.add_option("-l", "--listhosts", dest="listhosts", action="store_true", help="List hosts")
+listinggroup.add_option("-o", "--listos", dest="listos", action="store_true", help="List os")
+listinggroup.add_option("-P", "--listpuppets", dest="listpuppets", action="store_true", help="List puppets")
 listinggroup.add_option("-L", "--listclients", dest="listclients", action="store_true", help="list available clients")
+listinggroup.add_option("-R", "--listcompute", dest="listcomputes", action="store_true", help="List compute resources")
 listinggroup.add_option("-9", "--switchclient", dest="switchclient", type="string", help="Switch default client")
 parser.add_option_group(listinggroup)
+parser.add_option("-C", "--client", dest="client", type="string", help="Specify Client")
+parser.add_option("-v", "--verbose", dest="verbose", action="store_true",help="Verbose mode")
+parser.add_option("-u", "--update", dest="update", action="store_true",help="Update existing server")
+parser.add_option("-s", "--status", dest="status", action="store_true", help="Get status")
+parser.add_option("-D", "--dashboard", dest="dashboard", action="store_true", help="Get Dashboard info")
+
 
 (options, args) = parser.parse_args()
-environments=options.environments
-hosts=options.hosts
-hostgroups=options.hostgroups
+listenvironments=options.listenvironments
+listhosts=options.listhosts
+listhostgroups=options.listhostgroups
+listarchs=options.listarchs
+listos=options.listos
+listdomains=options.listdomains
+listpuppets=options.listpuppets
 name=options.name
 kill=options.kill
-archs=options.archs
-domains=options.domains
 status=options.status
 dashboard=options.dashboard
-errors=options.errors
 foremanhost=options.foremanhost
 hostgroup=options.hostgroup
 powerup=options.powerup
@@ -154,15 +156,15 @@ ip=options.ip
 mac=options.mac
 cores=options.cores
 memory=options.memory
-compute_resources=options.compute_resources
+listcomputes=options.listcomputes
 compute_resource_id=options.compute_resource_id
-operatingsystems=options.operatingsystems
-puppet=options.puppet
 update=options.update
 verbose=options.verbose
 puppetclass=options.puppetclass
-listclients = options.listclients
-switchclient = options.switchclient
+listclients=options.listclients
+switchclient=options.switchclient
+client=options.client
+dns=options.dns
 
 
 foremanconffile="%s/foreman.ini" %(os.environ['HOME'])
@@ -219,19 +221,14 @@ if not client:
   os._exit(1)
 
 #PARSE DEFAULT SECTION
-try:
- if not host and default.has_key("clu"):clu=default["clu"]
- if not numcpu and default.has_key("numcpu"):numcpu=int(default["numcpu"])
- if not diskformat and default.has_key("diskformat"):diskformat=default["diskformat"]
- if default.has_key("disksize"):disksize=int(default["disksize"])*GB
- if default.has_key("memory"):memory=int(default["memory"])*MB
- if default.has_key("low"):low=float(default["low"])
- if not storagedomain and default.has_key("storagedomain"):storagedomain=default["storagedomain"]
- if not numinterfaces and default.has_key("numinterfaces"):numinterfaces=int(default["numinterfaces"])
- if not ossl and default.has_key("ssl"):ossl=True
-except:
- print "Problem parsing default section in your ini file"
- os._exit(1)
+#try:
+# if not host and default.has_key("clu"):clu=default["clu"]
+# if not numcpu and default.has_key("numcpu"):numcpu=int(default["numcpu"])
+# if not diskformat and default.has_key("diskformat"):diskformat=default["diskformat"]
+# if default.has_key("low"):low=float(default["low"])
+#except:
+# print "Problem parsing default section in your ini file"
+# os._exit(1)
 
 try:
  foremanhost=foremans[client]["host"]
@@ -250,31 +247,29 @@ except KeyError,e:
  os._exit(1)
 
 #url="http://puppet/hosts"
-if not hosts and not hostgroups and not name and not archs and not domains and not status and not dashboard and not errors and not compute_resources and not operatingsystems and not environments and not puppet and not kill and not update  and not puppetclass:
+if not listhosts and not listhostgroups and not name and not listarchs and not listdomains and not status and not dashboard and not listcomputes and not listos and not listenvironments and not listpuppets and not kill and not update  and not puppetclass:
  print "No actions specified.Leaving..."
  sys.exit(1)
 
-if hosts or name:
+if listhosts or name:
  url="http://%s/api/hosts" % (foremanhost)
-if hostgroups:
+if listhostgroups:
  url="http://%s/api/hostgroups"  % (foremanhost)
-if archs:
+if listarchs:
  url="http://%s/api/architectures"  % (foremanhost)
-if domains:
+if listdomains:
  url="http://%s/api/domains"  % (foremanhost)
 if status:
  url="http://%s/api/status"  % (foremanhost)
 if dashboard:
  url="http://%s/api/dashboard"  % (foremanhost)
-if errors:
- url="http://%s/api/hosts/errors"  % (foremanhost)
-if compute_resources:
+if listcomputes:
  url="http://%s/api/compute_resources"  % (foremanhost)
-if operatingsystems:
+if listos:
  url="http://%s/api/operatingsystems"  % (foremanhost)
-if environments:
+if listenvironments:
  url="http://%s/api/environments"  % (foremanhost)
-if puppet:
+if listpuppets:
  url="http://%s/api/smart_proxies?type=puppet"  % (foremanhost)
  #url="http://%s/ptables"  % (foremanhost)
 
