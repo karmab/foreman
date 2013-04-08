@@ -61,14 +61,20 @@ def foremando(url,actiontype=None,postdata=None):
 
 #create a vm with 
 #python foreman.py -f 192.168.17.5  -n prout.ib -1 192.168.17.206 
-def foremancreate(url,name,ip=None,osid=None,envid=None,archid=None,puppetid=None,ptableid=None,hostgroup=None,powerup=None,mac=None,memory=None,core=None,computeid=None):
- if not osid:osid="2"
- if not envid:envid="1"
- if not archid:archid="1"
- if not puppetid:puppetid="1"
- if not ptableid:ptableid="1"
+def foremancreate(host=None,name=None,dns=None,ip=None,osid=None,envid=None,archid=None,puppetid=None,ptableid=None,hostgroup=None,powerup=None,mac=None,memory=None,core=None,computeid=None):
+ url="http://%s/api/hosts" % (host)
+ if dns:name="%s.%s" % (name,dns)
+ if osid:osid=foremangetid(foremanhost,"operatingsystems",osid)
+ if envid:envid=foremangetid(foremanhost,"environments",envid)
+ if archid:archid=foremangetid(foremanhost,"architectures",archid)
+ if puppetid:puppetid=foremangetid(foremanhost,"puppet",puppetid)
  postdata={}
- postdata["host"]={"name":name, "operatingsystem_id":osid,"environment_id":envid, "architecture_id":archid, "puppet_proxy_id":puppetid, "ptable_id":ptableid }
+ postdata["host"]={"name":name}
+ if osid:postdata["host"]["operatingsystem_id"]=ip
+ if envid:postdata["host"]["environment_id"]=envid
+ if archid:postdata["host"]["architecture_id"]=envid
+ if puppetid:postdata["host"]["puppet_proxy_id"]=puppetid
+ if ptableid:postdata["host"]["ptable_id"]=ptableid
  if ip:postdata["host"]["ip"]=ip
  if mac:postdata["host"]["mac"]=mac
  if powerup:postdata["host"]["powerup"]=powerup
@@ -76,13 +82,13 @@ def foremancreate(url,name,ip=None,osid=None,envid=None,archid=None,puppetid=Non
  if core:postdata["host"]["core"]=core
  if computeid:postdata["host"]["compute_resource_id"]=computeid
  if hostgroup:
-  hostgroupid=foremangetid(foreman,"hostgroups",hostgroup)
+  hostgroupid=foremangetid(host,"hostgroups",hostgroup)
   postdata["host"]["hostgroup_id"]=hostgroupid
  postdata="%s" % str(postdata).replace("'",'"')
  foremando(url,actiontype="POST",postdata=postdata)
  
-def foremangetid(foremanhost,searchtype,searchname):
- url="http://%s/api/%s/%s" % (foremanhost,searchtype,searchname)
+def foremangetid(host,searchtype,searchname):
+ url="http://%s/api/%s/%s" % (host,searchtype,searchname)
  result=foremando(url)
  if searchtype.endswith("es"):
   shortname=searchtype[:-2]
@@ -91,15 +97,16 @@ def foremangetid(foremanhost,searchtype,searchname):
  return str(result[shortname]["id"])
 
 
-def foremanaddpuppetclass(name,puppetclass):
- puppetclassid=foremangetid(foreman,"puppetclasses",puppetclass)
- #nameid=foremangetid(foreman,"hosts",name)
- url="http://%s/api/hosts/%s/puppetclass_ids" % (foreman,name) 
+def foremanaddpuppetclass(host,name,puppetclass):
+ puppetclassid=foremangetid(host,"puppetclasses",puppetclass)
+ #nameid=foremangetid(host,"hosts",name)
+ url="http://%s/api/hosts/%s/puppetclass_ids" % (host,name) 
  postdata={"puppetclass_id": puppetclassid}
  foremando(url,actiontype="POST",postdata=postdata)
 
 #example of PUT REQUEST
-def foremanupdateip(url,name,ip):
+def foremanupdateip(host,name,ip):
+ url="http://%s/api/hosts/%s" % (host,name)
  postdata='{"host":{"ip":"%s" }}' % ip
  foremando(url,actiontype="PUT",postdata=postdata)
 
@@ -238,7 +245,7 @@ try:
  if foremans[client].has_key("mac"):mac=foremans[client]["mac"]
  if foremans[client].has_key("os"):foremanos=foremans[client]["os"]
  if foremans[client].has_key("env"):foremanenv=foremans[client]["env"]
- if foremans[client].has_key("arch"):foremanarch=foremans[client]["env"]
+ if foremans[client].has_key("arch"):foremanarch=foremans[client]["arch"]
  if foremans[client].has_key("puppet"):foremanpuppet=foremans[client]["puppet"]
  if foremans[client].has_key("org"):foremanptable=foremans[client]["ptable"]
  if not dns and foremans[client].has_key('dns'):dns=foremans[client]['dns']
@@ -246,12 +253,11 @@ except KeyError,e:
  print "Problem parsing foreman ini file:Missing parameter %s" % e
  os._exit(1)
 
-#url="http://puppet/hosts"
 if not listhosts and not listhostgroups and not name and not listarchs and not listdomains and not status and not dashboard and not listcomputes and not listos and not listenvironments and not listpuppets and not kill and not update  and not puppetclass:
  print "No actions specified.Leaving..."
  sys.exit(1)
 
-if listhosts or name:
+if listhosts:
  url="http://%s/api/hosts" % (foremanhost)
 if listhostgroups:
  url="http://%s/api/hostgroups"  % (foremanhost)
@@ -285,8 +291,7 @@ if ip and update:
  if name=="":
   print "name cant be blank"
   sys.exit(1)
- url="http://%s/api/hosts/%s" % (foremanhost,name)
- foremanupdateip(url,name,ip)
+ foremanupdateip(foremanhost,name,ip)
  sys.exit(0)
 
 #USE THE FOLLOWING STUFF FOR CLASSES
@@ -294,14 +299,15 @@ if ip and update:
 #http://192.168.8.2/lookup_keys/2-testdir/
 
 if puppetclass and name:
- foremanaddpuppetclass(name,puppetclass)
+ foremanaddpuppetclass(foremanhost,name,puppetclass)
  sys.exit(0)
 
 if name:
  #if not ip:ip=raw_input("Enter ip for your new host")
  #if not mac:mac=raw_input("Enter mac for your new host")
  #res =foremancreate(url=url,name=name,ip=ip,osid=osid,envid=envid,archid=archid,puppetid=puppetid,ptableid=ptableid,hostgroup=hostgroup,powerup=powerup,mac=mac,memory=memory,core=core,compute_resource_id=compute_resource_id):
- res =foremancreate(url=url,name=name,ip=ip,osid=None,envid=None,archid=None,puppetid=None,ptableid=None,hostgroup=hostgroup,powerup=None,mac=mac,memory=None,core=None,computeid=None)
+ #res =foremancreate(host=foremanhost,name=name,ip=ip,osid=None,envid=None,archid=None,puppetid=None,ptableid=None,hostgroup=hostgroup,powerup=None,mac=mac,memory=None,core=None,computeid=None)
+ res =foremancreate(host=foremanhost,name=name,dns=dns,ip=ip,osid=None,envid=None,archid=None,puppetid=None,ptableid=None,hostgroup=hostgroup,powerup=None,mac=mac,memory=None,core=None,computeid=None)
  print res
  sys.exit(0)
 
