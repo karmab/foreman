@@ -29,7 +29,7 @@ import ConfigParser
 
 ERR_NOFOREMANFILE="You need to create a correct foreman.ini file in your home directory.Check documentation"
 
-def foremando(url,actiontype=None,postdata=None):
+def foremando(url=None, actiontype=None, postdata=None, user=None, password=None):
  if postdata:postdata="%s" % str(postdata).replace("'",'"')
  c = pycurl.Curl()
  b = StringIO.StringIO()
@@ -38,7 +38,8 @@ def foremando(url,actiontype=None,postdata=None):
  #c.setopt(pycurl.HTTPHEADER, [ "Content-type: application/json","Accept: application/json","Accept: version=2"])
  c.setopt(pycurl.HTTPHEADER, [ "Content-type: application/json","Accept: application/json,version=2" ])
  c.setopt(pycurl.HTTPAUTH, pycurl.HTTPAUTH_BASIC)
- #c.setopt(pycurl.USERPWD, password)
+ if user and password:
+     c.setopt(pycurl.USERPWD, "%s:%s" % (user,password))
  c.setopt(pycurl.SSL_VERIFYPEER, False)
  c.setopt(pycurl.SSL_VERIFYHOST, False)
  if actiontype=="POST":
@@ -86,11 +87,11 @@ def foremancreate(host=None,name=None,dns=None,ip=None,osid=None,envid=None,arch
   hostgroupid=foremangetid(host,"hostgroups",hostgroup)
   postdata["host"]["hostgroup_id"]=hostgroupid
  postdata="%s" % str(postdata).replace("'",'"')
- foremando(url,actiontype="POST",postdata=postdata)
+ foremando(url=url, actiontype="POST", postdata=postdata, user=user, password=password)
  
 def foremangetid(host,searchtype,searchname):
  url="http://%s/api/%s/%s" % (host,searchtype,searchname)
- result=foremando(url)
+ result=foremando(url=url, user=user, password=password)
  if searchtype.endswith("es"):
   shortname=searchtype[:-2]
  else:
@@ -103,13 +104,13 @@ def foremanaddpuppetclass(host,name,puppetclass):
  #nameid=foremangetid(host,"hosts",name)
  url="http://%s/api/hosts/%s/puppetclass_ids" % (host,name) 
  postdata={"puppetclass_id": puppetclassid}
- foremando(url,actiontype="POST",postdata=postdata)
+ foremando(url=url,actiontype="POST",postdata=postdata, user=user, password=password)
 
 #example of PUT REQUEST
 def foremanupdateip(host,name,ip):
  url="http://%s/api/hosts/%s" % (host,name)
  postdata='{"host":{"ip":"%s" }}' % ip
- foremando(url,actiontype="PUT",postdata=postdata)
+ foremando(url=url, actiontype="PUT", postdata=postdata, user=user, password=password)
 
 parser = optparse.OptionParser("Usage: %prog [options]")
 creationgroup = optparse.OptionGroup(parser, "Creation options")
@@ -240,16 +241,26 @@ if not client:
 
 try:
  foremanhost=foremans[client]["host"]
- if foremans[client].has_key("port"):foremanport=foremans[client]["port"]
- if foremans[client].has_key("user"):foremanuser=foremans[client]["user"]
- if foremans[client].has_key("password"):foremanpassword=foremans[client]["password"]
- if foremans[client].has_key("mac"):mac=foremans[client]["mac"]
- if foremans[client].has_key("os"):foremanos=foremans[client]["os"]
- if foremans[client].has_key("env"):foremanenv=foremans[client]["env"]
- if foremans[client].has_key("arch"):foremanarch=foremans[client]["arch"]
- if foremans[client].has_key("puppet"):foremanpuppet=foremans[client]["puppet"]
- if foremans[client].has_key("org"):foremanptable=foremans[client]["ptable"]
- if not dns and foremans[client].has_key('dns'):dns=foremans[client]['dns']
+ if foremans[client].has_key("port"):
+     port = foremans[client]["port"]
+ if foremans[client].has_key("user"):
+     user = foremans[client]["user"]
+ if foremans[client].has_key("password"):
+     password = foremans[client]["password"]
+ if foremans[client].has_key("mac"):
+     mac = foremans[client]["mac"]
+ if foremans[client].has_key("os"):
+     foremanos = foremans[client]["os"]
+ if foremans[client].has_key("env"):
+     foremanenv = foremans[client]["env"]
+ if foremans[client].has_key("arch"):
+     foremanarch = foremans[client]["arch"]
+ if foremans[client].has_key("puppet"):
+     foremanpuppet = foremans[client]["puppet"]
+ if foremans[client].has_key("org"):
+     foremanptable = foremans[client]["ptable"]
+ if not dns and foremans[client].has_key('dns'):
+     dns = foremans[client]['dns']
 except KeyError,e:
  print "Problem parsing foreman ini file:Missing parameter %s" % e
  os._exit(1)
@@ -280,10 +291,9 @@ if listpuppets:
  url="http://%s/api/smart_proxies?type=puppet"  % (foremanhost)
  #url="http://%s/ptables"  % (foremanhost)
 
-
 if kill:
  url="http://%s/hosts/%s" % (foremanhost,kill)
- foremando(url,actiontype="DELETE")
+ foremando(url=url, actiontype="DELETE", user=user, password=password)
  sys.exit(0)
 
 if ip and update:
@@ -312,7 +322,7 @@ if name:
  print res
  sys.exit(0)
 
-res= foremando(url)
+res= foremando(url=url, user=user, password=password)
 results={}
 for  r in res:
  info=r.values()[0]
