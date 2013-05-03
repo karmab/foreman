@@ -87,11 +87,11 @@ def foremancreate(host=None,name=None,dns=None,ip=None,osid=None,envid=None,arch
   hostgroupid=foremangetid(host,"hostgroups",hostgroup)
   postdata["host"]["hostgroup_id"]=hostgroupid
  postdata="%s" % str(postdata).replace("'",'"')
- foremando(url=url, actiontype="POST", postdata=postdata, user=user, password=password)
+ foremando(url=url, actiontype="POST", postdata=postdata, user=foremanuser, password=foremanpassword)
  
 def foremangetid(host,searchtype,searchname):
  url="http://%s/api/%s/%s" % (host,searchtype,searchname)
- result=foremando(url=url, user=user, password=password)
+ result=foremando(url=url, user=foremanuser, password=foremanpassword)
  if searchtype.endswith("es"):
   shortname=searchtype[:-2]
  else:
@@ -104,13 +104,13 @@ def foremanaddpuppetclass(host,name,puppetclass):
  #nameid=foremangetid(host,"hosts",name)
  url="http://%s/api/hosts/%s/puppetclass_ids" % (host,name) 
  postdata={"puppetclass_id": puppetclassid}
- foremando(url=url,actiontype="POST",postdata=postdata, user=user, password=password)
+ foremando(url=url,actiontype="POST",postdata=postdata, user=foremanuser, password=foremanpassword)
 
 #example of PUT REQUEST
 def foremanupdateip(host,name,ip):
  url="http://%s/api/hosts/%s" % (host,name)
  postdata='{"host":{"ip":"%s" }}' % ip
- foremando(url=url, actiontype="PUT", postdata=postdata, user=user, password=password)
+ foremando(url=url, actiontype="PUT", postdata=postdata, user=foremanuser, password=foremanpassword)
 
 parser = optparse.OptionParser("Usage: %prog [options]")
 creationgroup = optparse.OptionGroup(parser, "Creation options")
@@ -244,9 +244,9 @@ try:
  if foremans[client].has_key("port"):
      port = foremans[client]["port"]
  if foremans[client].has_key("user"):
-     user = foremans[client]["user"]
+     foremanuser = foremans[client]["user"]
  if foremans[client].has_key("password"):
-     password = foremans[client]["password"]
+     foremanpassword = foremans[client]["password"]
  if foremans[client].has_key("mac"):
      mac = foremans[client]["mac"]
  if foremans[client].has_key("os"):
@@ -293,7 +293,7 @@ if listpuppets:
 
 if kill:
  url="http://%s/hosts/%s" % (foremanhost,kill)
- foremando(url=url, actiontype="DELETE", user=user, password=password)
+ foremando(url=url, actiontype="DELETE", user=foremanuser, password=foremanpassword)
  sys.exit(0)
 
 if ip and update:
@@ -322,7 +322,7 @@ if name:
  print res
  sys.exit(0)
 
-res= foremando(url=url, user=user, password=password)
+res= foremando(url=url, user=foremanuser, password=foremanpassword)
 results={}
 for  r in res:
  info=r.values()[0]
